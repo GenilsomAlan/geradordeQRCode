@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
             qrCodeElement.innerHTML = '<p class="text-red-500 text-center">Connection error. Is the server running?</p>';
         }
     }
-
+    /**/
     function downloadPNG() {
         const qrImg = document.querySelector('#qr-code img');
         if (qrImg && qrImg.src.startsWith('data:image/png')) {
