@@ -1,18 +1,18 @@
-// Script Front-end (public/script.js)
+// Front-end Script (public/script.js)
 
 document.addEventListener('DOMContentLoaded', function() {
     // 1. Load saved settings if available
     const savedSettings = localStorage.getItem('qrGeneratorSettings');
     if (savedSettings) {
         const settings = JSON.parse(savedSettings);
-        document.getElementById('qr-content').value = settings.content || 'https://example.com';
+        document.getElementById('qr-content').value = settings.content || 'https://vercel.com';
         document.getElementById('qr-color').value = settings.color || '#000000';
         document.getElementById('bg-color').value = settings.bgColor || '#ffffff';
         document.getElementById('qr-size').value = settings.size || '256';
         document.getElementById('qr-error-correction').value = settings.errorCorrection || 'M';
     }
-
-    // Generate QR code on page load if there's content
+    
+    // Gerar QR code no carregamento inicial
     if (document.getElementById('qr-content').value) {
         generateQRCode();
     }
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('download-png').addEventListener('click', downloadPNG);
     document.getElementById('save-settings').addEventListener('click', saveSettings);
 
-    // 3. Funções Principais
+    // 3. Funções de Comunicação com o Servidor
     async function generateQRCode() {
         const content = document.getElementById('qr-content').value.trim();
         
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const qrCodeElement = document.getElementById('qr-code');
-        qrCodeElement.innerHTML = '<p class="text-gray-400 text-center">Generating...</p>'; // Loading state
+        qrCodeElement.innerHTML = '<p class="text-gray-400 text-center">Generating...</p>'; // Estado de carregamento
 
         const settingsToSend = {
             content: content,
@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
-            // Chama o endpoint PRIVADO do servidor
-            const response = await fetch('/generate-qr', {
+            // Chama a Serverless Function através do endpoint /api/generate-qr
+            const response = await fetch('/api/generate-qr', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -55,9 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
 
-            if (data.error) {
-                qrCodeElement.innerHTML = `<p class="text-red-500 text-center">Error: ${data.error}</p>`;
-                return;
+            if (!response.ok || data.error) {
+                 const errorMessage = data.error || `HTTP Error: ${response.status} ${response.statusText}`;
+                 qrCodeElement.innerHTML = `<p class="text-red-500 text-center">Error: ${errorMessage}</p>`;
+                 return;
             }
             
             if (data.imageUrl) {
@@ -69,10 +70,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Fetch error:', error);
-            qrCodeElement.innerHTML = '<p class="text-red-500 text-center">Connection error. Is the server running?</p>';
+            qrCodeElement.innerHTML = '<p class="text-red-500 text-center">Connection error. Could not reach Vercel function.</p>';
         }
     }
-    /**/
+
+    // 4. Funções Auxiliares
     function downloadPNG() {
         const qrImg = document.querySelector('#qr-code img');
         if (qrImg && qrImg.src.startsWith('data:image/png')) {
@@ -83,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             link.click();
             document.body.removeChild(link);
         } else {
-            alert('Please generate a QR code first. Only PNG format is available via server for this example.');
+            alert('Please generate a QR code first.');
         }
     }
 
